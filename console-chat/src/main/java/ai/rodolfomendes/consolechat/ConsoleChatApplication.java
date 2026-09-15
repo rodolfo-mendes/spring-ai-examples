@@ -1,5 +1,7 @@
 package ai.rodolfomendes.consolechat;
 
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -13,9 +15,21 @@ public class ConsoleChatApplication {
 	}
 
 	@Bean
-	public ApplicationRunner init() {
+	public ApplicationRunner init(ChatClient.Builder chatBuilder) {
 		return args -> {
-			IO.println("Welcome to the Console Chat Application!");
+			ChatClient chatClient = chatBuilder
+					.defaultOptions(ChatOptions.builder().model("gemma3"))
+					.build();
+
+			var prompt = "Hello AI buddy, greetings from humanity!";
+
+			var response = chatClient
+					.prompt(prompt)
+					.call()
+					.content();
+
+			IO.println("> " + prompt);
+			IO.println("> " + response);
 		};
 	}
 }
