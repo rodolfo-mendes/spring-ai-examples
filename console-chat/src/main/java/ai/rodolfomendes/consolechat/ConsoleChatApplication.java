@@ -2,6 +2,8 @@ package ai.rodolfomendes.consolechat;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
@@ -17,17 +19,16 @@ public class ConsoleChatApplication {
 	}
 
 	@Bean
-	public ApplicationRunner init(ChatClient.Builder chatBuilder) {
+	public ApplicationRunner init(ChatClient.Builder chatBuilder, ChatMemory chatMemory) {
 		return args -> {
 			ChatClient chatClient = chatBuilder
-					.defaultOptions(ChatOptions.builder().model(DEFAULT_MODEL))
-					.build();
+				.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
+				.defaultOptions(ChatOptions.builder().model(DEFAULT_MODEL))
+				.build();
 
 			IO.println("*** Console Chat ***");
 			IO.println("model: " + DEFAULT_MODEL);
 			IO.println("Type /exit to quit the application.");
-
-			var promptBuilder = new StringBuilder();
 
 			while(true) {
 				var prompt = IO.readln("> ");
@@ -40,20 +41,12 @@ public class ConsoleChatApplication {
 					break;
 				}
 
-				promptBuilder
-						.append("<user>")
-						.append(prompt)
-						.append("</user>");
-
 				var response = chatClient
-						.prompt(promptBuilder.toString())
-						.call()
-						.content();
-
-				promptBuilder
-						.append("<assistant>")
-						.append(response)
-						.append("</assistant>");
+					.prompt()
+					.advisors(spec -> spec.param(ChatMemory.CONVERSATION_ID, "CHAT"))
+					.user(prompt)
+					.call()
+					.content();
 
 				IO.println("- " + response + System.lineSeparator());
 			}
