@@ -27,8 +27,11 @@ public class ConsoleChatApplication {
 			IO.println("model: " + DEFAULT_MODEL);
 			IO.println("Type /exit to quit the application.");
 
+			var promptBuilder = new StringBuilder();
+
 			while(true) {
 				var prompt = IO.readln("> ");
+
 				if(prompt == null || prompt.isBlank()) {
 					continue;
 				}
@@ -37,10 +40,20 @@ public class ConsoleChatApplication {
 					break;
 				}
 
+				promptBuilder
+						.append("<user>")
+						.append(prompt)
+						.append("</user>");
+
 				var response = chatClient
-						.prompt(prompt)
+						.prompt(promptBuilder.toString())
 						.call()
 						.content();
+
+				promptBuilder
+						.append("<assistant>")
+						.append(response)
+						.append("</assistant>");
 
 				IO.println("- " + response + System.lineSeparator());
 			}
